@@ -23,6 +23,11 @@ char grid[][] = {
   {'r', 'b', 'n', 'q', 'k', 'n', 'b', 'r'}
 };
 
+//message types
+final int TURN = 0;
+final int UNDO = 1;
+final int PROMOTION = 2;
+
 void setup() {
   size(800, 800);
   
@@ -90,13 +95,25 @@ void drawPieces() {
 void receiveMove() {
   if (myClient.available() > 0) {
     String incoming = myClient.readString();
-    int r1 = int(incoming.substring(0,1));
-    int c1 = int(incoming.substring(2,3));
-    int r2 = int(incoming.substring(4,5));
-    int c2 = int(incoming.substring(6,7));
-    grid[r2][c2] = grid[r1][c1];
-    grid[r1][c1] = ' ';
-    myTurn = true;
+    println(messageType(incoming));
+    if (messageType(incoming) == TURN) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2 = int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      grid[r2][c2] = grid[r1][c1];
+      grid[r1][c1] = ' ';
+      myTurn = true;
+    } else if (messageType(incoming) == UNDO) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2= int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      char oldPiece = incoming.charAt(8);
+      grid[r1][c1] = grid[r2][c2];
+      grid[r2][c2] = oldPiece;
+      myTurn = false;
+    }
   }
 }
 
@@ -121,7 +138,7 @@ void mouseReleased() {
       if (!(row2 == row1 && col2 == col1)) {
         grid[row2][col2] = grid[row1][col1];
         grid[row1][col1] = ' ';
-        myClient.write(row1 + "," + col1 + "," + row2 + "," + col2); 
+        myClient.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + TURN); 
         firstClick = true;
         myTurn = false;
       }
@@ -133,3 +150,7 @@ boolean myPiece() {
   char selected = (grid[row1][col1]);
   return (str(selected).equals(str(selected).toUpperCase()) && selected != ' ');
   }
+  
+int messageType(String string) {
+  return int(string.substring(string.length() - 1, string.length()));
+}

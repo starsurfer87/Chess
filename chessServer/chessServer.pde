@@ -11,6 +11,7 @@ PImage brook, bbishop, bknight, bqueen, bking, bpawn;
 boolean firstClick;
 boolean myTurn;
 int row1, col1, row2, col2;
+String lastMove;
 
 char grid[][] = {
   {'R', 'B', 'N', 'Q', 'K', 'N', 'B', 'R'}, 
@@ -23,10 +24,18 @@ char grid[][] = {
   {'r', 'b', 'n', 'q', 'k', 'n', 'b', 'r'}
 };
 
+//message types
+final int TURN = 0;
+final int UNDO = 1;
+final int PROMOTION = 2;
+
+
 void setup() {
   size(800, 800);
   
   myServer = new Server(this, 1234);
+  
+  lastMove = " ";
 
   firstClick = true;
   myTurn = true;
@@ -121,11 +130,13 @@ void mouseReleased() {
       row2 = mouseY/100;
       col2 = mouseX/100;
       if (!(row2 == row1 && col2 == col1)) {
+        lastMove = row1 + "," + col1 + "," + row2 + "," + col2 + "," + grid[row2][col2] + "," + UNDO;
         grid[row2][col2] = grid[row1][col1];
         grid[row1][col1] = ' ';
-        myServer.write(row1 + "," + col1 + "," + row2 + "," + col2);
+        myServer.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + TURN);
         firstClick = true;
         myTurn = false;
+        println(lastMove);
       }
     }
   }
@@ -134,4 +145,17 @@ void mouseReleased() {
 boolean myPiece() {
   char selected = (grid[row1][col1]);
   return (str(selected).equals(str(selected).toLowerCase()) && selected != ' ');
+}
+
+int messageType(String string) {
+  return int(string.substring(string.length() - 1, string.length()));
+}
+  
+void keyReleased() {
+  if ((key == 'z' || key == 'Z') && !(myTurn)) {
+    grid[row1][col1] = grid[row2][col2];
+    grid[row2][col2] = lastMove.charAt(8);
+    myServer.write(lastMove);
+    myTurn = true;
   }
+}
