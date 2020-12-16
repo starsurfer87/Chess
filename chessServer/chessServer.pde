@@ -100,13 +100,25 @@ void receiveMove() {
   Client myclient = myServer.available();
   if (myclient != null) {
     String incoming = myclient.readString();
-    int r1 = int(incoming.substring(0,1));
-    int c1 = int(incoming.substring(2,3));
-    int r2 = int(incoming.substring(4,5));
-    int c2 = int(incoming.substring(6,7));
-    grid[r2][c2] = grid[r1][c1];
-    grid[r1][c1] = ' ';
-    myTurn = true;
+    println(messageType(incoming));
+    if (messageType(incoming) == TURN) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2 = int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      grid[r2][c2] = grid[r1][c1];
+      grid[r1][c1] = ' ';
+      myTurn = true;
+    } else if (messageType(incoming) == UNDO) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2= int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      char oldPiece = incoming.charAt(8);
+      grid[r1][c1] = grid[r2][c2];
+      grid[r2][c2] = oldPiece;
+      myTurn = false;
+    }
   }
 }
 
@@ -152,7 +164,7 @@ int messageType(String string) {
 }
   
 void keyReleased() {
-  if ((key == 'z' || key == 'Z') && !(myTurn)) {
+  if ((key == 'z' || key == 'Z') && !(myTurn) && lastMove != " ") {
     grid[row1][col1] = grid[row2][col2];
     grid[row2][col2] = lastMove.charAt(8);
     myServer.write(lastMove);
