@@ -28,6 +28,7 @@ char grid[][] = {
 final int TURN = 0;
 final int UNDO = 1;
 final int PROMOTION = 2;
+final int PAUSE = 3; 
 
 void setup() {
   size(800, 800);
@@ -96,9 +97,12 @@ void drawPieces() {
 }
 
 void receiveMove() {
+  
   if (myClient.available() > 0) {
+    //println("?");
     String incoming = myClient.readString();
-    println(messageType(incoming));
+    println(incoming);
+    //println(messageType(incoming));
     if (messageType(incoming) == TURN) {
       int r1 = int(incoming.substring(0,1));
       int c1 = int(incoming.substring(2,3));
@@ -116,6 +120,22 @@ void receiveMove() {
       grid[r1][c1] = grid[r2][c2];
       grid[r2][c2] = oldPiece;
       myTurn = false;
+    } else if (messageType(incoming) == PROMOTION) {
+      int r2 = int(incoming.substring(0,1));
+      int c2 = int(incoming.substring(2,3));
+      char piece = incoming.charAt(4);
+      //println(piece);
+      grid[r2][c2] = piece;
+      myTurn = true;
+    } else if (messageType(incoming) == PAUSE) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2 = int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      grid[r2][c2] = grid[r1][c1];
+      grid[r1][c1] = ' ';
+      myTurn = false;
+      //println("paused");
     }
   }
 }
@@ -164,6 +184,7 @@ void keyReleased() {
     grid[row1][col1] = grid[row2][col2];
     grid[row2][col2] = lastMove.charAt(8);
     myClient.write(lastMove);
+    lastMove = " ";
     myTurn = true;
   }
 }

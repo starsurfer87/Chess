@@ -10,6 +10,7 @@ PImage wrook, wbishop, wknight, wqueen, wking, wpawn;
 PImage brook, bbishop, bknight, bqueen, bking, bpawn;
 boolean firstClick;
 boolean myTurn;
+boolean pawnPremotion;
 int row1, col1, row2, col2;
 String lastMove;
 
@@ -28,6 +29,7 @@ char grid[][] = {
 final int TURN = 0;
 final int UNDO = 1;
 final int PROMOTION = 2;
+final int PAUSE = 3; 
 
 
 void setup() {
@@ -39,6 +41,7 @@ void setup() {
 
   firstClick = true;
   myTurn = true;
+  pawnPremotion = false;
 
   brook = loadImage("blackRook.png");
   bbishop = loadImage("blackBishop.png");
@@ -60,6 +63,8 @@ void draw() {
   drawPieces();
   receiveMove();
   highlightSquare();
+  checkPremotion();
+  //println("row 2: " + row2);
 }
 
 void drawBoard() {
@@ -131,6 +136,29 @@ void highlightSquare() {
   }
 }
 
+void checkPremotion() {
+  if (pawnPremotion) {
+    strokeWeight(3);
+    stroke(0);
+    fill(255);
+    rect (100, 200, 600, 400);
+    textAlign(CENTER);
+    textSize(50);
+    fill(0);
+    text("Pawn Premotion", 400, 275);
+    textSize(20);
+    text("Press a key to choose a piece", 400, 325);
+    image(wqueen, 170, 400, 100, 100);
+    text("<Q>", 220, 550);
+    image(wrook, 290, 400, 100, 100);
+    text("<R>", 340, 550);
+    image(wknight, 410, 400, 100, 100);
+    text("<K>", 460, 550);
+    image(wbishop, 530, 400, 100, 100);
+    text("<B>", 580, 550);
+  }
+}
+
 void mouseReleased() {
   if (myTurn) {
     if (firstClick) {
@@ -145,7 +173,12 @@ void mouseReleased() {
         lastMove = row1 + "," + col1 + "," + row2 + "," + col2 + "," + grid[row2][col2] + "," + UNDO;
         grid[row2][col2] = grid[row1][col1];
         grid[row1][col1] = ' ';
+        if (grid[row2][col2] == 'p' && row2 == 0) {
+          pawnPremotion = true;
+          myServer.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + PAUSE);
+        } else {
         myServer.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + TURN);
+        }
         firstClick = true;
         myTurn = false;
         println(lastMove);
@@ -168,6 +201,27 @@ void keyReleased() {
     grid[row1][col1] = grid[row2][col2];
     grid[row2][col2] = lastMove.charAt(8);
     myServer.write(lastMove);
+    lastMove = " ";
     myTurn = true;
+  }
+  if (pawnPremotion) {
+    if (key == 'q' || key == 'Q') {
+      grid[row2][col2] = 'q';
+      myServer.write(row2 + "," + col2 + "," + "q" + "," + PROMOTION);
+      println("outgoing: " + row2 + "," + col2 + "," + "q" + "," + PROMOTION);
+      pawnPremotion = false;
+    } else if (key == 'r' || key == 'R') {
+      grid[row2][col2] = 'r';
+      myServer.write(row2 + "," + col2 + "," + "r" + "," + PROMOTION);
+      pawnPremotion = false;
+    } else if (key == 'k' || key == 'K') {
+      grid[row2][col2] = 'n';
+      myServer.write(row2 + "," + col2 + "," + "n" + "," + PROMOTION);
+      pawnPremotion = false;
+    } else if (key == 'b' || key == 'B') {
+      grid[row2][col2] = 'b';
+      myServer.write(row2 + "," + col2 + "," + "b" + "," + PROMOTION);
+      pawnPremotion = false;
+    }
   }
 }
