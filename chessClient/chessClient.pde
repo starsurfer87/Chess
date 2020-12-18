@@ -10,6 +10,7 @@ PImage wrook, wbishop, wknight, wqueen, wking, wpawn;
 PImage brook, bbishop, bknight, bqueen, bking, bpawn;
 boolean firstClick;
 boolean myTurn;
+boolean pawnPremotion;
 int row1, col1, row2, col2;
 String lastMove;
 
@@ -39,6 +40,7 @@ void setup() {
 
   firstClick = true;
   myTurn = false;
+  pawnPremotion = false;
 
   brook = loadImage("blackRook.png");
   bbishop = loadImage("blackBishop.png");
@@ -60,6 +62,7 @@ void draw() {
   drawPieces();
   receiveMove();
   highlightSquare();
+  checkPromotion();
 }
 
 void drawBoard() {
@@ -149,6 +152,29 @@ void highlightSquare() {
   }
 }
 
+void checkPromotion() {
+  if (pawnPremotion) {
+    strokeWeight(3);
+    stroke(0);
+    fill(255);
+    rect (100, 200, 600, 400);
+    textAlign(CENTER);
+    textSize(50);
+    fill(0);
+    text("Pawn Premotion", 400, 275);
+    textSize(20);
+    text("Press a key to choose a piece", 400, 325);
+    image(bqueen, 170, 400, 100, 100);
+    text("<Q>", 220, 550);
+    image(brook, 290, 400, 100, 100);
+    text("<R>", 340, 550);
+    image(bknight, 410, 400, 100, 100);
+    text("<K>", 460, 550);
+    image(bbishop, 530, 400, 100, 100);
+    text("<B>", 580, 550);
+  }
+}
+
 void mouseReleased() {
   if (myTurn) {
     if (firstClick) {
@@ -162,7 +188,12 @@ void mouseReleased() {
         lastMove = row1 + "," + col1 + "," + row2 + "," + col2 + "," + grid[row2][col2] + "," + UNDO;
         grid[row2][col2] = grid[row1][col1];
         grid[row1][col1] = ' ';
-        myClient.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + TURN); 
+        if (grid[row2][col2] == 'P' && row2 == 7) {
+          pawnPremotion = true;
+          myClient.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + PAUSE);
+        } else {
+        myClient.write(row1 + "," + col1 + "," + row2 + "," + col2 + "," + TURN);
+        }
         firstClick = true;
         myTurn = false;
       }
@@ -186,5 +217,24 @@ void keyReleased() {
     myClient.write(lastMove);
     lastMove = " ";
     myTurn = true;
+  }
+  if (pawnPremotion) {
+    if (key == 'q' || key == 'Q') {
+      grid[row2][col2] = 'Q';
+      myClient.write(row2 + "," + col2 + "," + "Q" + "," + PROMOTION);
+      pawnPremotion = false;
+    } else if (key == 'r' || key == 'R') {
+      grid[row2][col2] = 'R';
+      myClient.write(row2 + "," + col2 + "," + "R" + "," + PROMOTION);
+      pawnPremotion = false;
+    } else if (key == 'k' || key == 'K') {
+      grid[row2][col2] = 'N';
+      myClient.write(row2 + "," + col2 + "," + "N" + "," + PROMOTION);
+      pawnPremotion = false;
+    } else if (key == 'b' || key == 'B') {
+      grid[row2][col2] = 'B';
+      myClient.write(row2 + "," + col2 + "," + "B" + "," + PROMOTION);
+      pawnPremotion = false;
+    }
   }
 }

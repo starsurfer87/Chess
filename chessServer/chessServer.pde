@@ -63,7 +63,7 @@ void draw() {
   drawPieces();
   receiveMove();
   highlightSquare();
-  checkPremotion();
+  checkPromotion();
   //println("row 2: " + row2);
 }
 
@@ -123,6 +123,22 @@ void receiveMove() {
       grid[r1][c1] = grid[r2][c2];
       grid[r2][c2] = oldPiece;
       myTurn = false;
+    } else if (messageType(incoming) == PROMOTION) {
+      int r2 = int(incoming.substring(0,1));
+      int c2 = int(incoming.substring(2,3));
+      char piece = incoming.charAt(4);
+      //println(piece);
+      grid[r2][c2] = piece;
+      myTurn = true;
+    } else if (messageType(incoming) == PAUSE) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2 = int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      grid[r2][c2] = grid[r1][c1];
+      grid[r1][c1] = ' ';
+      myTurn = false;
+      //println("paused");
     }
   }
 }
@@ -136,7 +152,7 @@ void highlightSquare() {
   }
 }
 
-void checkPremotion() {
+void checkPromotion() {
   if (pawnPremotion) {
     strokeWeight(3);
     stroke(0);
