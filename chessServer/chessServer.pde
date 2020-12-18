@@ -113,6 +113,7 @@ void receiveMove() {
       int c2 = int(incoming.substring(6,7));
       grid[r2][c2] = grid[r1][c1];
       grid[r1][c1] = ' ';
+      if ((grid[row2][col2] == 'p') && (row2 == row1 - 2) && (grid[r2][c2] == 'P') && (r2 == row2 + 1)) enPassent();
       myTurn = true;
     } else if (messageType(incoming) == UNDO) {
       int r1 = int(incoming.substring(0,1));
@@ -240,4 +241,8 @@ void keyReleased() {
       pawnPremotion = false;
     }
   }
+}
+
+void enPassent() {
+  println("En Passent Move");
 }
