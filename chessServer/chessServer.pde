@@ -29,7 +29,8 @@ char grid[][] = {
 final int TURN = 0;
 final int UNDO = 1;
 final int PROMOTION = 2;
-final int PAUSE = 3; 
+final int PAUSE = 3;
+final int ENPASSENT = 4;
 
 
 void setup() {
@@ -245,4 +246,6 @@ void keyReleased() {
 
 void enPassent() {
   println("En Passent Move");
+  grid[row2][col2] = ' ';
+  myServer.write(row2 + "," + col2 + "," + ENPASSENT);
 }

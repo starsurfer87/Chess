@@ -30,6 +30,7 @@ final int TURN = 0;
 final int UNDO = 1;
 final int PROMOTION = 2;
 final int PAUSE = 3; 
+final int ENPASSENT = 4;
 
 void setup() {
   size(800, 800);
@@ -139,6 +140,10 @@ void receiveMove() {
       grid[r1][c1] = ' ';
       myTurn = false;
       //println("paused");
+    } else if (messageType(incoming) == ENPASSENT) {
+      int r2 = int(incoming.substring(0,1));
+      int c2 = int(incoming.substring(2,3));
+      grid[r2][c2] = ' ';
     }
   }
 }
