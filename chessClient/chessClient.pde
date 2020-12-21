@@ -30,7 +30,9 @@ final int TURN = 0;
 final int UNDO = 1;
 final int PROMOTION = 2;
 final int PAUSE = 3; 
-final int ENPASSENT = 4;
+final int UNDOPP = 4;
+final int ENPASSENT = 5;
+final int UNDOEP = 6;
 
 void setup() {
   size(800, 800);
@@ -145,6 +147,18 @@ void receiveMove() {
       int r2 = int(incoming.substring(0,1));
       int c2 = int(incoming.substring(2,3));
       grid[r2][c2] = ' ';
+      lastMove = lastMove.substring(0, lastMove.length() - 1) + UNDOEP;
+      println(lastMove);
+    } else if (messageType(incoming) == UNDOEP) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2= int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      char oldPiece = incoming.charAt(8);
+      grid[r1][c1] = grid[r2][c2];
+      grid[r2][c2] = oldPiece;
+      grid[r2 + 1][c2] = 'P';
+      myTurn = false;
     }
   }
 }
@@ -218,8 +232,14 @@ int messageType(String string) {
 
 void keyReleased() {
   if ((key == 'z' || key == 'Z') && !(myTurn) && lastMove != " ") {
-    grid[row1][col1] = grid[row2][col2];
-    grid[row2][col2] = lastMove.charAt(8);
+    if (messageType(lastMove) == UNDO) {
+      grid[row1][col1] = grid[row2][col2];
+      grid[row2][col2] = lastMove.charAt(8);
+    } else if (messageType(lastMove) == UNDOEP) {
+      grid[row1][col1] = grid[row2][col2];
+      grid[row2][col2] = lastMove.charAt(8);
+      grid[row2 - 1][col2] = 'p';
+    }
     myClient.write(lastMove);
     lastMove = " ";
     myTurn = true;
@@ -246,7 +266,7 @@ void keyReleased() {
 }
 
 void enPassent() {
-  println("En Passent Move");
+  //println("En Passent Move");
   grid[row2][col2] = ' ';
   myClient.write(row2 + "," + col2 + "," + ENPASSENT);
 }
