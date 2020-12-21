@@ -143,6 +143,15 @@ void receiveMove() {
       grid[r1][c1] = ' ';
       myTurn = false;
       //println("paused");
+    } else if (messageType(incoming) == UNDOPP) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2= int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      char oldPiece = incoming.charAt(8);
+      grid[r1][c1] = 'p';
+      grid[r2][c2] = oldPiece;
+      myTurn = false;
     } else if (messageType(incoming) == ENPASSENT) {
       int r2 = int(incoming.substring(0,1));
       int c2 = int(incoming.substring(2,3));
@@ -239,6 +248,9 @@ void keyReleased() {
       grid[row1][col1] = grid[row2][col2];
       grid[row2][col2] = lastMove.charAt(8);
       grid[row2 - 1][col2] = 'p';
+    } else if (messageType(lastMove) == UNDOPP) {
+      grid[row1][col1] = 'P';
+      grid[row2][col2] = lastMove.charAt(8);
     }
     myClient.write(lastMove);
     lastMove = " ";
@@ -262,6 +274,7 @@ void keyReleased() {
       myClient.write(row2 + "," + col2 + "," + "B" + "," + PROMOTION);
       pawnPremotion = false;
     }
+    lastMove = lastMove.substring(0, lastMove.length() - 1) + UNDOPP;
   }
 }
 
