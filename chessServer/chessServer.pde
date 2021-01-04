@@ -29,7 +29,10 @@ char grid[][] = {
 final int TURN = 0;
 final int UNDO = 1;
 final int PROMOTION = 2;
-final int PAUSE = 3; 
+final int PAUSE = 3;
+final int UNDOPP = 4; 
+final int ENPASSENT = 5;
+final int UNDOEP = 6;
 
 
 void setup() {
@@ -105,7 +108,7 @@ void receiveMove() {
   Client myclient = myServer.available();
   if (myclient != null) {
     String incoming = myclient.readString();
-    println(messageType(incoming));
+    //println(messageType(incoming));
     if (messageType(incoming) == TURN) {
       int r1 = int(incoming.substring(0,1));
       int c1 = int(incoming.substring(2,3));
@@ -113,6 +116,7 @@ void receiveMove() {
       int c2 = int(incoming.substring(6,7));
       grid[r2][c2] = grid[r1][c1];
       grid[r1][c1] = ' ';
+      if ((grid[row2][col2] == 'p') && (row2 == row1 - 2) && (grid[r2][c2] == 'P') && (r2 == row2 + 1)) enPassent();
       myTurn = true;
     } else if (messageType(incoming) == UNDO) {
       int r1 = int(incoming.substring(0,1));
@@ -139,6 +143,30 @@ void receiveMove() {
       grid[r1][c1] = ' ';
       myTurn = false;
       //println("paused");
+    } else if (messageType(incoming) == UNDOPP) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2= int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      char oldPiece = incoming.charAt(8);
+      grid[r1][c1] = 'P';
+      grid[r2][c2] = oldPiece;
+      myTurn = false;
+    } else if (messageType(incoming) == ENPASSENT) {
+      int r2 = int(incoming.substring(0,1));
+      int c2 = int(incoming.substring(2,3));
+      grid[r2][c2] = ' ';
+      lastMove = lastMove.substring(0, lastMove.length() - 1) + UNDOEP;
+    } else if (messageType(incoming) == UNDOEP) {
+      int r1 = int(incoming.substring(0,1));
+      int c1 = int(incoming.substring(2,3));
+      int r2= int(incoming.substring(4,5));
+      int c2 = int(incoming.substring(6,7));
+      char oldPiece = incoming.charAt(8);
+      grid[r1][c1] = grid[r2][c2];
+      grid[r2][c2] = oldPiece;
+      grid[r2 - 1][c2] = 'p';
+      myTurn = false;
     }
   }
 }
@@ -180,7 +208,7 @@ void mouseReleased() {
     if (firstClick) {
       row1 = mouseY/100;
       col1 = mouseX/100;
-      println(myPiece());
+      //println(myPiece());
       if (myPiece()) firstClick = false;
     } else {
       row2 = mouseY/100;
@@ -214,8 +242,17 @@ int messageType(String string) {
   
 void keyReleased() {
   if ((key == 'z' || key == 'Z') && !(myTurn) && lastMove != " ") {
-    grid[row1][col1] = grid[row2][col2];
-    grid[row2][col2] = lastMove.charAt(8);
+    if (messageType(lastMove) == UNDO) {
+      grid[row1][col1] = grid[row2][col2];
+      grid[row2][col2] = lastMove.charAt(8);
+    } else if (messageType(lastMove) == UNDOEP) {
+      grid[row1][col1] = grid[row2][col2];
+      grid[row2][col2] = lastMove.charAt(8);
+      grid[row2 + 1][col2] = 'P';
+    } else if (messageType(lastMove) == UNDOPP) {
+      grid[row1][col1] = 'p';
+      grid[row2][col2] = lastMove.charAt(8);
+    }
     myServer.write(lastMove);
     lastMove = " ";
     myTurn = true;
@@ -224,7 +261,7 @@ void keyReleased() {
     if (key == 'q' || key == 'Q') {
       grid[row2][col2] = 'q';
       myServer.write(row2 + "," + col2 + "," + "q" + "," + PROMOTION);
-      println("outgoing: " + row2 + "," + col2 + "," + "q" + "," + PROMOTION);
+      //println("outgoing: " + row2 + "," + col2 + "," + "q" + "," + PROMOTION);
       pawnPremotion = false;
     } else if (key == 'r' || key == 'R') {
       grid[row2][col2] = 'r';
@@ -239,5 +276,11 @@ void keyReleased() {
       myServer.write(row2 + "," + col2 + "," + "b" + "," + PROMOTION);
       pawnPremotion = false;
     }
+    lastMove = lastMove.substring(0, lastMove.length() - 1) + UNDOPP;
   }
+}
+
+void enPassent() {
+  grid[row2][col2] = ' ';
+  myServer.write(row2 + "," + col2 + "," + ENPASSENT);
 }
